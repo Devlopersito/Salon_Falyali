@@ -5,6 +5,7 @@ import { createTrackEngine } from './trackEngine.js'
 
 
 const gameState = {
+  carLvl: 1,
   speed: 100,
   maxSpeed: 180,
   constantSpeed: 100,
@@ -13,39 +14,42 @@ const gameState = {
 }
 
 document.querySelector('#app').innerHTML = `
-  <h1>Car Racing Game</h1>
-
-  <p>Money: <span id="money">0</span></p>
-  <p>Speed: <span id="speed">100</span></p>
-
-  <button id="accelerate">Accelerate</button>
+<div class="layout">
+  <aside class="sidebar">
+  <h1>Salon Falyali</h1>
+ <p>Money: <span id="money">0</span></p>
+    <p>Speed: <span id="speed">100</span></p>
+    <button id="accelerate">Accelerate</button>
+    <button id="upgradeCar">Upgrade Car</button>
+    <button id="upgradeTrack">UpgradeTrack</button>
+  </aside>
+  <main class="main-content">
   
-  
-  <svg id="track" viewBox="0 0 800 500">
-    <!-- Одна смуга траси -->
-    <path
-      id="road"
-      fill="none"
-      stroke="#555"
-      stroke-width="18"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
 
-    <!-- Стартова лінія -->
-    <line
-      id="start-line"
-      stroke="#fff"
-      stroke-width="4"
-    />
+    <svg id="track" viewBox="0 0 800 500">
+      <path
+        id="road"
+        fill="none"
+        stroke="#555"
+        stroke-width="18"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
 
-    <!-- Крапка, що рухається по трасі -->
-    <circle
-      id="car"
-      r="6"
-      fill="#ff3333"
-    />
-  </svg>
+      <line
+        id="start-line"
+        stroke="#fff"
+        stroke-width="4"
+      />
+
+      <circle
+        id="car"
+        r="6"
+        fill="#ff3333"
+      />
+    </svg>
+  </main>
+</div>
 `
 
 
@@ -70,8 +74,8 @@ const trackEngine = createTrackEngine(road)
 updateUI()
 
 const accelerateButton = document.querySelector('#accelerate')
-
-
+const upgradeCarButton = document.querySelector('#upgradeCar')
+const upgradeTrackButton = document.querySelector('#upgradeTrack')
 function updateUI() {
   document.querySelector('#speed').textContent =
     Math.round(gameState.speed)
@@ -93,7 +97,26 @@ accelerateButton.addEventListener('click', () => {
 
   updateUI()
 })
+upgradeCarButton.addEventListener('click', () => {
+  let price = 20 * (gameState.carLvl)**2
+  if (gameState.money >=price) {
+    gameState.carLvl += 1   
+    gameState.money -= price
+    gameState.constantSpeed += 50
+    gameState.maxSpeed += 80
+    gameState.speed += 50
+  }
 
+
+  updateUI()
+})
+upgradeTrackButton.addEventListener('click', () => {
+  if (gameState.speed < gameState.maxSpeed) {
+    gameState.speed += 10
+  }
+
+  updateUI()
+})
 let previousTime = 0
 
 function gameLoop(currentTime) {

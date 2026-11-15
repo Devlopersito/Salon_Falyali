@@ -8,9 +8,9 @@ const defaultGameState = {
   carLvl: 1,
   trackLvl: 1,
 
-  speed: 100,
-  maxSpeed: 180,
-  constantSpeed: 100,
+  speed: 70,
+  maxSpeed: 150,
+  constantSpeed: 70,
 
   position: 0,
   money: 0,
@@ -49,18 +49,20 @@ function saveGame() {
 document.querySelector('#app').innerHTML = `
 <div class="layout">
   <aside class="sidebar">
+    <div class="top-bar">
+      <button id="toggleMusic">Music: OFF</button>
+    </div>
+
     <h1>Salon Falyali</h1>
 
     <p>Money: <span id="money">0</span></p>
-    <p>Speed: <span id="speed">100</span></p>
+    <p>Speed: <span id="speed">70</span></p>
 
     <button id="accelerate">Accelerate</button>
 
     <button id="upgradeCar">Upgrade Car</button>
 
     <button id="upgradeTrack">Upgrade Track</button>
-
-    <button id="toggleMusic">Music: OFF</button>
   </aside>
   <main class="main-content">
     <svg id="track" viewBox="0 0 800 500">
@@ -128,6 +130,17 @@ bgMusic.volume = 0.3
 
 let isMusicPlaying = false
 
+// Оновлення вигляду кнопки музики (зелена ON / червона OFF)
+function updateMusicButtonUI(playing) {
+  if (playing) {
+    toggleMusicButton.textContent = 'Music: ON'
+    toggleMusicButton.classList.add('music-on')
+  } else {
+    toggleMusicButton.textContent = 'Music: OFF'
+    toggleMusicButton.classList.remove('music-on')
+  }
+}
+
 toggleMusicButton.addEventListener('click', (e) => {
   e.stopPropagation()
 
@@ -135,17 +148,19 @@ toggleMusicButton.addEventListener('click', (e) => {
     bgMusic.pause()
     isMusicPlaying = false
     gameState.musicEnabled = false
-    toggleMusicButton.textContent = 'Music: OFF'
+    updateMusicButtonUI(false)
   } else {
     gameState.musicEnabled = true
     bgMusic.play().then(() => {
       isMusicPlaying = true
-      toggleMusicButton.textContent = 'Music: ON'
+      updateMusicButtonUI(true)
     }).catch((err) => {
       console.warn('Не вдалося запустити музику:', err)
     })
   }
 
+  clickSound.currentTime = 0
+  clickSound.play().catch(() => {})
   saveGame()
 })
 
@@ -154,7 +169,7 @@ function startMusicOnFirstInteraction() {
   if (gameState.musicEnabled && !isMusicPlaying) {
     bgMusic.play().then(() => {
       isMusicPlaying = true
-      toggleMusicButton.textContent = 'Music: ON'
+      updateMusicButtonUI(true)
     }).catch(() => {})
   }
   document.removeEventListener('click', startMusicOnFirstInteraction)
@@ -188,15 +203,15 @@ accelerateButton.addEventListener('click', () => {
 
 upgradeCarButton.addEventListener('click', () => {
   let price = 20 * (gameState.carLvl)**2
-  if (gameState.money >= price) {
+  if (gameState.money >= price && gameState.carLvl < 70) {
     gameState.carLvl += 1
 
     gameState.money -= price
 
-    gameState.constantSpeed += 50
-    gameState.maxSpeed += 80
+    gameState.constantSpeed += 20
+    gameState.maxSpeed += 50
 
-    gameState.speed += 50
+    gameState.speed += 20
   }
 
   clickSound.currentTime = 0
@@ -208,7 +223,7 @@ upgradeCarButton.addEventListener('click', () => {
 upgradeTrackButton.addEventListener('click', () => {
   let price = 40 * (gameState.trackLvl)**2
 
-  if (gameState.money >= price) {
+  if (gameState.money >= price && gameState.trackLvl < 60) {
     gameState.trackLvl += 1
 
     gameState.money -= price

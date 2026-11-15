@@ -3,29 +3,66 @@ import './style.css'
 import { tracks } from './tracks.js'
 import { createTrackEngine } from './trackEngine.js'
 
-
-const gameState = {
+// Стандартні значення нової гри
+const defaultGameState = {
   carLvl: 1,
+  trackLvl: 1,
+
   speed: 100,
   maxSpeed: 180,
   constantSpeed: 100,
+
   position: 0,
-  money: 0
+  money: 0,
+  musicEnabled: true,
+}
+
+// Завантаження збереження
+function loadGame() {
+  const savedGame = localStorage.getItem('carRacingSave')
+
+  if (savedGame) {
+    try {
+      return {
+        ...defaultGameState,
+        ...JSON.parse(savedGame)
+      }
+    } catch (error) {
+      console.error('Помилка завантаження збереження:', error)
+    }
+  }
+
+  return { ...defaultGameState }
+}
+
+// Поточний стан гри
+const gameState = loadGame()
+
+// Збереження гри
+function saveGame() {
+  localStorage.setItem(
+    'carRacingSave',
+    JSON.stringify(gameState)
+  )
 }
 
 document.querySelector('#app').innerHTML = `
 <div class="layout">
   <aside class="sidebar">
-  <h1>Salon Falyali</h1>
- <p>Money: <span id="money">0</span></p>
+    <h1>Salon Falyali</h1>
+
+    <p>Money: <span id="money">0</span></p>
     <p>Speed: <span id="speed">100</span></p>
+
     <button id="accelerate">Accelerate</button>
+
     <button id="upgradeCar">Upgrade Car</button>
-    <button id="upgradeTrack">UpgradeTrack</button>
+
+    <button id="upgradeTrack">Upgrade Track</button>
+
+    <button id="toggleMusic">Music: OFF</button>
   </aside>
   <main class="main-content">
-  
-
     <svg id="track" viewBox="0 0 800 500">
       <path
         id="road"
@@ -52,8 +89,7 @@ document.querySelector('#app').innerHTML = `
 </div>
 `
 
-
-const selectedTrack = tracks[0]
+const selectedTrack = structuredClone(tracks[0])
 
 const road = document.querySelector('#road')
 const car = document.querySelector('#car')
@@ -76,6 +112,56 @@ updateUI()
 const accelerateButton = document.querySelector('#accelerate')
 const upgradeCarButton = document.querySelector('#upgradeCar')
 const upgradeTrackButton = document.querySelector('#upgradeTrack')
+const toggleMusicButton = document.querySelector('#toggleMusic')
+
+// Звук кліку
+const clickSound = new Audio(
+  new URL('./wii-keyboard-click-3.mp3', import.meta.url).href
+)
+
+// Фонова музика (Смешарики - Погоня)
+const bgMusic = new Audio(
+  new URL('./smeshariki-pogonia.mp3', import.meta.url).href
+)
+bgMusic.loop = true
+bgMusic.volume = 0.3
+
+let isMusicPlaying = false
+
+toggleMusicButton.addEventListener('click', (e) => {
+  e.stopPropagation()
+
+  if (isMusicPlaying) {
+    bgMusic.pause()
+    isMusicPlaying = false
+    gameState.musicEnabled = false
+    toggleMusicButton.textContent = 'Music: OFF'
+  } else {
+    gameState.musicEnabled = true
+    bgMusic.play().then(() => {
+      isMusicPlaying = true
+      toggleMusicButton.textContent = 'Music: ON'
+    }).catch((err) => {
+      console.warn('Не вдалося запустити музику:', err)
+    })
+  }
+
+  saveGame()
+})
+
+// Автозапуск музики при першому кліку будь-де в грі
+function startMusicOnFirstInteraction() {
+  if (gameState.musicEnabled && !isMusicPlaying) {
+    bgMusic.play().then(() => {
+      isMusicPlaying = true
+      toggleMusicButton.textContent = 'Music: ON'
+    }).catch(() => {})
+  }
+  document.removeEventListener('click', startMusicOnFirstInteraction)
+}
+
+document.addEventListener('click', startMusicOnFirstInteraction)
+
 function updateUI() {
   document.querySelector('#speed').textContent =
     Math.round(gameState.speed)
@@ -89,34 +175,53 @@ function updateUI() {
   car.setAttribute('cy', point.y)
 }
 
-
 accelerateButton.addEventListener('click', () => {
   if (gameState.speed < gameState.maxSpeed) {
     gameState.speed += 10
   }
 
+  clickSound.currentTime = 0
+  clickSound.play().catch(() => {})
   updateUI()
+  saveGame()
 })
+
 upgradeCarButton.addEventListener('click', () => {
   let price = 20 * (gameState.carLvl)**2
-  if (gameState.money >=price) {
-    gameState.carLvl += 1   
+  if (gameState.money >= price) {
+    gameState.carLvl += 1
+
     gameState.money -= price
+
     gameState.constantSpeed += 50
     gameState.maxSpeed += 80
+
     gameState.speed += 50
   }
 
-
+  clickSound.currentTime = 0
+  clickSound.play().catch(() => {})
   updateUI()
+  saveGame()
 })
+
 upgradeTrackButton.addEventListener('click', () => {
-  if (gameState.speed < gameState.maxSpeed) {
-    gameState.speed += 10
+  let price = 40 * (gameState.trackLvl)**2
+
+  if (gameState.money >= price) {
+    gameState.trackLvl += 1
+
+    gameState.money -= price
+
+    selectedTrack.rewardPerLap += 30
   }
 
+  clickSound.currentTime = 0
+  clickSound.play().catch(() => {})
   updateUI()
+  saveGame()
 })
+
 let previousTime = 0
 
 function gameLoop(currentTime) {
@@ -139,6 +244,8 @@ function gameLoop(currentTime) {
     gameState.money += selectedTrack.rewardPerLap
 
     console.log('Lap complete! Money:', gameState.money)
+
+    saveGame()
   }
 
   updateUI()
@@ -147,3 +254,13 @@ function gameLoop(currentTime) {
 }
 
 requestAnimationFrame(gameLoop)
+
+// Автоматичне збереження раз на 3 секунди
+setInterval(() => {
+  saveGame()
+}, 3000)
+
+// Збереження перед закриттям або перезавантаженням сторінки
+window.addEventListener('beforeunload', () => {
+  saveGame()
+})

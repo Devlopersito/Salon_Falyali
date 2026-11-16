@@ -49,43 +49,75 @@ function saveGame() {
 document.querySelector('#app').innerHTML = `
 <div class="layout">
   <aside class="sidebar">
+    <!-- Верхня панель: знак питання зліва та музика справа -->
     <div class="top-bar">
+      <button id="helpBtn" title="Character Goal">?</button>
       <button id="toggleMusic">Music: OFF</button>
     </div>
 
-    <h1>Salon Falyali</h1>
+    <!-- Спливаюче текстове поле з метою персонажа -->
+    <div id="storyBox" class="story-popup hidden">
+      Your goal is to earn <strong>1,000,000</strong> in a small, unpopular business: <strong>racing</strong>.
+    </div>
 
-    <p>Money: <span id="money">0</span></p>
-    <p>Speed: <span id="speed">70</span></p>
+    <div class="title-wrapper">
+      <div class="racing-stripe"></div>
+      <h1>🏁 Salon Falyali 🏁</h1>
+      <div class="racing-stripe"></div>
+    </div>
 
-    <button id="accelerate">Accelerate</button>
+    <div class="stats-box">
+      <p>💰 Money: <span id="money">0</span></p>
+      <p>🏎️ Speed: <span id="speed">70</span> km/h</p>
+    </div>
 
-    <button id="upgradeCar">Upgrade Car</button>
+    <button id="accelerate">⚡ Accelerate</button>
 
-    <button id="upgradeTrack">Upgrade Track</button>
+    <button id="upgradeCar">🔧 Upgrade Car</button>
+
+    <button id="upgradeTrack">🛣️ Upgrade Track</button>
   </aside>
+
   <main class="main-content">
     <svg id="track" viewBox="0 0 800 500">
+      <g id="decorations">
+        <circle cx="95" cy="95" r="22" fill="#4caf50" opacity="0.85"/>
+        <circle cx="115" cy="110" r="16" fill="#388e3c" opacity="0.9"/>
+
+        <circle cx="705" cy="110" r="24" fill="#4caf50" opacity="0.85"/>
+        <circle cx="685" cy="95" r="15" fill="#66bb6a" opacity="0.9"/>
+
+        <circle cx="110" cy="410" r="20" fill="#4caf50" opacity="0.85"/>
+        <circle cx="690" cy="400" r="25" fill="#388e3c" opacity="0.85"/>
+        <circle cx="715" cy="385" r="16" fill="#66bb6a" opacity="0.9"/>
+      </g>
+
+      <path
+        id="road-curb"
+        fill="none"
+        stroke="#ff3333"
+        stroke-width="23"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+
       <path
         id="road"
         fill="none"
-        stroke="#555"
+        stroke="#444455"
         stroke-width="18"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
 
-      <line
-        id="start-line"
-        stroke="#fff"
-        stroke-width="4"
-      />
-
-      <circle
-        id="car"
-        r="6"
-        fill="#ff3333"
-      />
+      <g id="car-group">
+        <rect x="-7" y="-8" width="4" height="3" rx="1" fill="#111"/>
+        <rect x="3" y="-8" width="4" height="3" rx="1" fill="#111"/>
+        <rect x="-7" y="5" width="4" height="3" rx="1" fill="#111"/>
+        <rect x="3" y="5" width="4" height="3" rx="1" fill="#111"/>
+        <rect x="-9" y="-5" width="18" height="10" rx="4" fill="#ff3333" stroke="#1f1f3d" stroke-width="1.5"/>
+        <circle cx="0" cy="0" r="2.5" fill="#1f1f3d"/>
+      </g>
     </svg>
   </main>
 </div>
@@ -94,27 +126,24 @@ document.querySelector('#app').innerHTML = `
 const selectedTrack = structuredClone(tracks[0])
 
 const road = document.querySelector('#road')
-const car = document.querySelector('#car')
+const roadCurb = document.querySelector('#road-curb')
+const carGroup = document.querySelector('#car-group')
 const svg = document.querySelector('#track')
-
-const startLine = document.querySelector('#start-line')
-
-startLine.setAttribute('x1', selectedTrack.startLine.x1)
-startLine.setAttribute('y1', selectedTrack.startLine.y1)
-startLine.setAttribute('x2', selectedTrack.startLine.x2)
-startLine.setAttribute('y2', selectedTrack.startLine.y2)
 
 svg.setAttribute('viewBox', selectedTrack.viewBox)
 
 road.setAttribute('d', selectedTrack.path)
+roadCurb.setAttribute('d', selectedTrack.path)
 
 const trackEngine = createTrackEngine(road)
-updateUI()
 
 const accelerateButton = document.querySelector('#accelerate')
 const upgradeCarButton = document.querySelector('#upgradeCar')
 const upgradeTrackButton = document.querySelector('#upgradeTrack')
 const toggleMusicButton = document.querySelector('#toggleMusic')
+
+const helpBtn = document.querySelector('#helpBtn')
+const storyBox = document.querySelector('#storyBox')
 
 // Звук кліку
 const clickSound = new Audio(
@@ -130,7 +159,6 @@ bgMusic.volume = 0.3
 
 let isMusicPlaying = false
 
-// Оновлення вигляду кнопки музики (зелена ON / червона OFF)
 function updateMusicButtonUI(playing) {
   if (playing) {
     toggleMusicButton.textContent = 'Music: ON'
@@ -164,18 +192,27 @@ toggleMusicButton.addEventListener('click', (e) => {
   saveGame()
 })
 
-// Автозапуск музики при першому кліку будь-де в грі
-function startMusicOnFirstInteraction() {
+// Відкриття вікна з метою при натисканні на "?"
+helpBtn.addEventListener('click', (e) => {
+  e.stopPropagation()
+  clickSound.currentTime = 0
+  clickSound.play().catch(() => {})
+  storyBox.classList.toggle('hidden')
+})
+
+// Закриття текстового поля при кліку куди завгодно на сторінці
+document.addEventListener('click', () => {
+  if (!storyBox.classList.contains('hidden')) {
+    storyBox.classList.add('hidden')
+  }
+
   if (gameState.musicEnabled && !isMusicPlaying) {
     bgMusic.play().then(() => {
       isMusicPlaying = true
       updateMusicButtonUI(true)
     }).catch(() => {})
   }
-  document.removeEventListener('click', startMusicOnFirstInteraction)
-}
-
-document.addEventListener('click', startMusicOnFirstInteraction)
+})
 
 function updateUI() {
   document.querySelector('#speed').textContent =
@@ -185,10 +222,13 @@ function updateUI() {
     gameState.money
 
   const point = trackEngine.getPoint(gameState.position)
+  const nextPoint = trackEngine.getPoint((gameState.position + 0.005) % 1)
+  const angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * (180 / Math.PI)
 
-  car.setAttribute('cx', point.x)
-  car.setAttribute('cy', point.y)
+  carGroup.setAttribute('transform', 'translate(' + point.x + ', ' + point.y + ') rotate(' + angle + ')')
 }
+
+updateUI()
 
 accelerateButton.addEventListener('click', () => {
   if (gameState.speed < gameState.maxSpeed) {
@@ -205,12 +245,9 @@ upgradeCarButton.addEventListener('click', () => {
   let price = 20 * (gameState.carLvl)**2
   if (gameState.money >= price && gameState.carLvl < 70) {
     gameState.carLvl += 1
-
     gameState.money -= price
-
     gameState.constantSpeed += 20
     gameState.maxSpeed += 50
-
     gameState.speed += 20
   }
 
@@ -222,12 +259,9 @@ upgradeCarButton.addEventListener('click', () => {
 
 upgradeTrackButton.addEventListener('click', () => {
   let price = 40 * (gameState.trackLvl)**2
-
   if (gameState.money >= price && gameState.trackLvl < 60) {
     gameState.trackLvl += 1
-
     gameState.money -= price
-
     selectedTrack.rewardPerLap += 30
   }
 
@@ -237,7 +271,7 @@ upgradeTrackButton.addEventListener('click', () => {
   saveGame()
 })
 
-let previousTime = 0
+let previousTime = performance.now()
 
 function gameLoop(currentTime) {
   const deltaTime = (currentTime - previousTime) / 1000
@@ -255,27 +289,20 @@ function gameLoop(currentTime) {
 
   if (gameState.position >= 1) {
     gameState.position -= 1
-
     gameState.money += selectedTrack.rewardPerLap
-
-    console.log('Lap complete! Money:', gameState.money)
-
     saveGame()
   }
 
   updateUI()
-
   requestAnimationFrame(gameLoop)
 }
 
 requestAnimationFrame(gameLoop)
 
-// Автоматичне збереження раз на 3 секунди
 setInterval(() => {
   saveGame()
 }, 3000)
 
-// Збереження перед закриттям або перезавантаженням сторінки
 window.addEventListener('beforeunload', () => {
   saveGame()
 })

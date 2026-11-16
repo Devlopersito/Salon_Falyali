@@ -683,3 +683,106 @@ html, body, #app {
 .story-popup.hidden {
   display: none;
 }
+/* Контейнер для кнопок ? та петлі зліва зверху */
+.top-left-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Кругла кнопка петлі (скидання прогресу) */
+#resetBtn {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 13px !important;
+  background-color: #a9a9e8 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#resetBtn {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 16px !important;
+  font-weight: 800;
+  color: #16162e !important;
+  background-color: #a9a9e8 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: none !important;
+}
+
+#resetBtn:hover {
+  transform: translateY(-1px) !important;
+}
+
+.reset-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+#resetBtn:hover .reset-icon {
+  animation: spinArrow 0.8s linear infinite;
+}
+
+@keyframes spinArrow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 2. Кнопки Accelerate, Upgrade Car та Upgrade Track: вібрація при наведенні */
+#accelerate:hover,
+#upgradeCar:hover,
+#upgradeTrack:hover {
+  animation: vibrateBtn 0.25s linear infinite;
+}
+
+@keyframes vibrateBtn {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-1.5px, 1px); }
+  50% { transform: translate(1.5px, -1px); }
+  75% { transform: translate(-1.5px, -1px); }
+  100% { transform: translate(1.5px, 1px); }
+}
+
+/* 3. Кнопка Music: стрибає, коли увімкнена (ON) */
+#toggleMusic.music-on {
+  animation: musicBounce 0.7s ease-in-out infinite;
+}
+
+@keyframes musicBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Покачується, коли на неї наведено курсор (і в ON, і в OFF) */
+#toggleMusic:hover,
+#toggleMusic.music-on:hover {
+  animation: musicWobble 0.45s ease-in-out infinite;
+}
+
+@keyframes musicWobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+/* Знак питання стрибає, доки на кнопку наведено курсор */
+.help-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+#helpBtn:hover .help-icon {
+  animation: helpJump 0.5s ease-in-out infinite;
+}
+
+@keyframes helpJump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}

@@ -49,9 +49,12 @@ function saveGame() {
 document.querySelector('#app').innerHTML = `
 <div class="layout">
   <aside class="sidebar">
-    <!-- Верхня панель: знак питання зліва та музика справа -->
+    <!-- Верхня панель: знак питання, кнопка петлі (скидання) та музика -->
     <div class="top-bar">
-      <button id="helpBtn" title="Character Goal">?</button>
+      <div class="top-left-controls">
+        <button id="helpBtn" title="Character Goal"><span class="help-icon">?</span></button>
+        <button id="resetBtn" title="Reset Progress"><span class="reset-icon">↻</span></button>
+      </div>
       <button id="toggleMusic">Music: OFF</button>
     </div>
 
@@ -123,7 +126,7 @@ document.querySelector('#app').innerHTML = `
 </div>
 `
 
-const selectedTrack = structuredClone(tracks[0])
+let selectedTrack = structuredClone(tracks[0])
 
 const road = document.querySelector('#road')
 const roadCurb = document.querySelector('#road-curb')
@@ -143,6 +146,7 @@ const upgradeTrackButton = document.querySelector('#upgradeTrack')
 const toggleMusicButton = document.querySelector('#toggleMusic')
 
 const helpBtn = document.querySelector('#helpBtn')
+const resetBtn = document.querySelector('#resetBtn')
 const storyBox = document.querySelector('#storyBox')
 
 // Звук кліку
@@ -191,6 +195,22 @@ toggleMusicButton.addEventListener('click', (e) => {
   clickSound.play().catch(() => {})
   saveGame()
 })
+
+// Скидання прогресу (кнопка петлі)
+// Миттєве скидання прогресу без попередження (кнопка петлі)
+resetBtn.addEventListener('click', (e) => {
+  e.stopPropagation()
+  clickSound.currentTime = 0
+  clickSound.play().catch(() => {})
+
+  const keepMusic = gameState.musicEnabled
+  localStorage.removeItem('carRacingSave')
+  Object.assign(gameState, defaultGameState, { musicEnabled: keepMusic })
+  selectedTrack = structuredClone(tracks[0])
+  saveGame()
+  updateUI()
+})
+
 
 // Відкриття вікна з метою при натисканні на "?"
 helpBtn.addEventListener('click', (e) => {
